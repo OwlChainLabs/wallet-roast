@@ -32,7 +32,7 @@ you need:
 
 - with solana tracker: last ~1000 trades, pnl in SOL
 - helius fallback: last ~100 SOL swaps, realized pnl in SOL
-- net pnl = SOL out minus SOL in per token. coins never sold count as lost (memecoin reality)
+- net pnl = SOL out minus SOL in per token, from real on-chain balance changes (fees and tips included). coins never sold count as lost (memecoin reality)
 - the score is simple on purpose: win rate and pnl move it up or down. see `lib/pnl.ts`
 
 ## stack

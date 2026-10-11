@@ -104,7 +104,7 @@ export default async function RoastPage({ params }: Props) {
       </div>
 
       <p className="foot">
-        {`based on the last ${stats.trades} trades. net pnl in ${stats.unit}, coins never sold count as lost.`} for fun, not financial advice.
+        {`based on the last ${stats.trades} trades. net pnl in ${stats.unit} from on-chain balances, incl. fees and tips. coins never sold count as lost.`} for fun, not financial advice.
         <br />
         open source · <a href="https://github.com/OwlChainLabs/wallet-roast">github</a>
       </p>
