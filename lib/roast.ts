@@ -139,7 +139,14 @@ async function buildRoast(wallet: string): Promise<RoastResult> {
     }
   }
 
-  const missing = [...new Set(swaps.map((x) => x.mint))].filter((m) => !names[m]);
+  // look up names for the coins with the biggest wins and losses first,
+  // those are the ones that end up in the roast (lookup is capped at 100)
+  const impact = new Map<string, number>();
+  for (const x of swaps) impact.set(x.mint, (impact.get(x.mint) ?? 0) + x.solDelta);
+  const missing = [...impact.entries()]
+    .sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))
+    .map(([m]) => m)
+    .filter((m) => !names[m]);
   if (missing.length && process.env.HELIUS_API_KEY) Object.assign(names, await fetchTokenNames(missing));
   stats = computeStats(wallet, swaps, names);
   const buys = swaps.filter((x) => x.tokenDelta > 0).length;
@@ -193,7 +200,7 @@ async function buildOrSkip(wallet: string): Promise<RoastResult> {
 // and the same wallet does not cost API calls again and again.
 export async function getRoast(wallet: string): Promise<RoastResult> {
   try {
-    return await unstable_cache(() => buildOrSkip(wallet), ["roast-v11", wallet], { revalidate: 3600 })();
+    return await unstable_cache(() => buildOrSkip(wallet), ["roast-v12", wallet], { revalidate: 3600 })();
   } catch (err) {
     if (err instanceof EmptyResult) return err.result;
     throw err;
