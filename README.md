@@ -29,6 +29,7 @@ you need:
 - a free api key from [solanatracker.io](https://solanatracker.io) (trade history)
 - a free api key from [helius.dev](https://helius.dev) (fallback)
 - an api key from [console.anthropic.com](https://console.anthropic.com)
+- optional: `NEXT_PUBLIC_SITE_URL` if you host it on your own domain (used in share links)
 
 ## how the numbers work
 
