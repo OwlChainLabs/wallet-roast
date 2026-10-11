@@ -54,12 +54,12 @@ export default async function RoastPage({ params }: Props) {
         <p className="roast">{roast}</p>
       </div>
 
-      {stats.buyOnly && (
-        <p className="sub">
-          🤖 this wallet only buys and never sells. that usually means a bot, a copy trader, or sells
-          happening from another wallet, so the pnl here is not the full story.
-        </p>
-      )}
+      {result.unreadable ? (
+        <div className="actions">
+          <a className="btn ghost" href="/">roast another</a>
+        </div>
+      ) : (
+      <>
 
       <div className="card">
         <div className="grid">
@@ -102,6 +102,8 @@ export default async function RoastPage({ params }: Props) {
         <a className="btn" href={shareUrl} target="_blank" rel="noopener noreferrer">share on x</a>
         <a className="btn ghost" href="/">roast another</a>
       </div>
+      </>
+      )}
 
       <p className="foot">
         {`based on the last ${stats.trades} trades. net pnl in ${stats.unit} from on-chain balances, incl. fees and tips. coins never sold count as lost.`} for fun, not financial advice.

@@ -5,6 +5,8 @@ import { fetchTradesST, hasSolanaTrackerKey } from "./solanatracker";
 import { computeStats, degenScore, money, type WalletStats } from "./pnl";
 
 export type RoastResult = {
+  source: string; // which data source produced the trades
+  unreadable?: boolean; // data looked implausible, no roast shown
   stats: WalletStats;
   score: number;
   title: string; // short punchline for the share card
@@ -108,14 +110,17 @@ async function buildRoast(wallet: string): Promise<RoastResult> {
   const started = Date.now();
   names = {};
   let swaps: Swap[] = [];
+  let source = "none";
 
   if (process.env.HELIUS_API_KEY) {
     try {
+      source = "helius-gtfa";
       // primary: only transactions where tokens moved in/out of this wallet,
       // with real balance changes. works for dev wallets and any terminal.
       swaps = await fetchOwnTrades(wallet);
     } catch (err) {
       console.error("gtfa failed, using enhanced transactions", wallet, err);
+      source = "helius-enhanced";
       swaps = await fetchSwaps(wallet).catch((e) => {
         console.error("helius failed", wallet, e);
         return [] as Swap[];
@@ -129,17 +134,35 @@ async function buildRoast(wallet: string): Promise<RoastResult> {
     if (st.swaps.length > swaps.length) {
       swaps = st.swaps;
       names = st.names;
+      source = "solanatracker";
     }
   }
 
   const missing = [...new Set(swaps.map((x) => x.mint))].filter((m) => !names[m]);
   if (missing.length && process.env.HELIUS_API_KEY) Object.assign(names, await fetchTokenNames(missing));
   stats = computeStats(wallet, swaps, names);
+  const buys = swaps.filter((x) => x.tokenDelta > 0).length;
+  console.log(`roast data ${wallet}: source=${source} swaps=${swaps.length} buys=${buys} sells=${swaps.length - buys}`);
 
   const score = degenScore(stats);
 
+  // many buys and zero sells is almost never real: we are missing the sells.
+  // better to say so than to roast someone with made-up numbers.
+  if (stats.buyOnly) {
+    return {
+      source,
+      unreadable: true,
+      stats,
+      score,
+      title: "We can't read this wallet properly yet",
+      roast:
+        "We only see buys and no sells for this wallet, which almost always means our data is incomplete, not that you never sell. We'd rather show nothing than roast you with wrong numbers. This happens with some dev wallets. We're working on it.",
+    };
+  }
+
   if (stats.trades === 0) {
     return {
+      source,
       stats,
       score,
       title: "No trades found. Suspiciously clean.",
@@ -149,7 +172,7 @@ async function buildRoast(wallet: string): Promise<RoastResult> {
   }
 
   const { title, roast } = await askClaude(describe(stats, score));
-  return { stats, score, title, roast };
+  return { source, stats, score, title, roast };
 }
 
 // Results with zero swaps are not cached (could be a temporary data issue).
@@ -161,7 +184,7 @@ class EmptyResult extends Error {
 
 async function buildOrSkip(wallet: string): Promise<RoastResult> {
   const r = await buildRoast(wallet);
-  if (r.stats.trades === 0) throw new EmptyResult(r); // errors are never cached
+  if (r.stats.trades === 0 || r.unreadable) throw new EmptyResult(r); // errors are never cached
   return r;
 }
 
@@ -169,7 +192,7 @@ async function buildOrSkip(wallet: string): Promise<RoastResult> {
 // and the same wallet does not cost API calls again and again.
 export async function getRoast(wallet: string): Promise<RoastResult> {
   try {
-    return await unstable_cache(() => buildOrSkip(wallet), ["roast-v9", wallet], { revalidate: 3600 })();
+    return await unstable_cache(() => buildOrSkip(wallet), ["roast-v10", wallet], { revalidate: 3600 })();
   } catch (err) {
     if (err instanceof EmptyResult) return err.result;
     throw err;
