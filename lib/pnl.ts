@@ -98,7 +98,9 @@ export function computeStats(
     unit: "SOL",
     trades: swaps.length,
     tokensTraded: results.length,
-    totalPnl: closed.reduce((sum, r) => sum + r.pnl, 0),
+    // net SOL result: closed positions plus bags never sold counted as lost.
+    // tokens only sold (bought before our window) are left out, we do not know their cost.
+    totalPnl: results.filter((r) => r.buys > 0).reduce((sum, r) => sum + r.pnl, 0),
     winRate: closed.length ? wins.length / closed.length : 0,
     biggestWin: sorted[0] && sorted[0].pnl > 0 ? sorted[0] : null,
     biggestLoss: sorted.at(-1) && sorted.at(-1)!.pnl < 0 ? sorted.at(-1)! : null,

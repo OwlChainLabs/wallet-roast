@@ -68,7 +68,7 @@ export default async function RoastPage({ params }: Props) {
             <div className="score" style={{ color: score >= 7 ? "var(--green)" : score >= 4 ? "#ffc857" : "var(--red)" }}>{score}/10</div>
           </div>
           <div className="stat">
-            <div className="k">realized pnl</div>
+            <div className="k">net pnl</div>
             <div className={`v ${stats.totalPnl >= 0 ? "pos" : "neg"}`}>{sol(stats.totalPnl)}</div>
           </div>
           <div className="stat">
@@ -104,7 +104,7 @@ export default async function RoastPage({ params }: Props) {
       </div>
 
       <p className="foot">
-        {stats.unit === "USD" ? "full trade history, realized pnl in USD." : `based on the last ${stats.trades} trades, realized pnl in SOL.`} open bags not counted. for fun, not financial advice.
+        {`based on the last ${stats.trades} trades. net pnl in ${stats.unit}, coins never sold count as lost.`} for fun, not financial advice.
         <br />
         open source · <a href="https://github.com/OwlChainLabs/wallet-roast">github</a>
       </p>

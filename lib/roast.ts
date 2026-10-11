@@ -27,9 +27,9 @@ function describe(s: WalletStats, score: number): string {
   const lines = [
     `trades: ${s.trades}`,
     `tokens traded: ${s.tokensTraded}`,
-    `realized pnl: ${fmt(s.totalPnl)}`,
+    `net pnl (unsold bags counted as lost): ${fmt(s.totalPnl)}`,
     `win rate: ${(s.winRate * 100).toFixed(0)}%`,
-    `bags never sold: ${s.bagsHeld}`,
+    `bags never sold (mostly dead coins): ${s.bagsHeld}`,
     `degen score: ${score}/10`,
   ];
   if (s.biggestWin) lines.push(`biggest win: ${s.biggestWin.name} ${fmt(s.biggestWin.pnl)}`);
@@ -149,7 +149,7 @@ async function buildOrSkip(wallet: string): Promise<RoastResult> {
 // and the same wallet does not cost API calls again and again.
 export async function getRoast(wallet: string): Promise<RoastResult> {
   try {
-    return await unstable_cache(() => buildOrSkip(wallet), ["roast-v6", wallet], { revalidate: 3600 })();
+    return await unstable_cache(() => buildOrSkip(wallet), ["roast-v7", wallet], { revalidate: 3600 })();
   } catch (err) {
     if (err instanceof EmptyResult) return err.result;
     throw err;

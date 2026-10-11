@@ -45,7 +45,7 @@ export async function GET(_req: Request, { params }: Ctx) {
             <div style={{ fontSize: 96, fontWeight: 800, color: score >= 7 ? "#14f195" : score >= 4 ? "#ffc857" : "#ff5c7a" }}>{`${score}/10`}</div>
           </div>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
-            <div style={{ fontSize: 26, color: "#9aa0b8" }}>realized pnl</div>
+            <div style={{ fontSize: 26, color: "#9aa0b8" }}>net pnl</div>
             <div style={{ fontSize: 56, fontWeight: 800, color: pnl >= 0 ? "#14f195" : "#ff5c7a" }}>
               {money(pnl, unit)}
             </div>
