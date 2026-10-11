@@ -1,5 +1,6 @@
 import { unstable_cache } from "next/cache";
-import { fetchSwaps, fetchTokenNames } from "./helius";
+import { fetchSwaps, fetchTokenNames, type Swap } from "./helius";
+import { fetchOwnTrades } from "./helius-gtfa";
 import { fetchTradesST, hasSolanaTrackerKey } from "./solanatracker";
 import { computeStats, degenScore, money, type WalletStats } from "./pnl";
 
@@ -104,19 +105,27 @@ async function askClaude(facts: string): Promise<{ title: string; roast: string 
 async function buildRoast(wallet: string): Promise<RoastResult> {
   let names: Record<string, string>;
   let stats: WalletStats;
-  // primary: the wallet's own signed transactions with real balance changes (helius).
-  // ground truth for any terminal (padre, axiom, photon, ...).
-  let swaps = process.env.HELIUS_API_KEY ? await fetchSwaps(wallet).catch((err) => {
-    console.error("helius failed", wallet, err);
-    return [];
-  }) : [];
+  const started = Date.now();
   names = {};
+  let swaps: Swap[] = [];
 
-  if (swaps.length < 5 && hasSolanaTrackerKey()) {
-    // dev wallets of busy coins are flooded with other people's transactions,
-    // so helius finds few own trades in time. solana tracker indexes per trader.
-    console.error(`helius found ${swaps.length} swaps, using solana tracker`, wallet);
-    const st = await fetchTradesST(wallet, 1000);
+  if (process.env.HELIUS_API_KEY) {
+    try {
+      // primary: only transactions where tokens moved in/out of this wallet,
+      // with real balance changes. works for dev wallets and any terminal.
+      swaps = await fetchOwnTrades(wallet);
+    } catch (err) {
+      console.error("gtfa failed, using enhanced transactions", wallet, err);
+      swaps = await fetchSwaps(wallet).catch((e) => {
+        console.error("helius failed", wallet, e);
+        return [] as Swap[];
+      });
+    }
+  }
+
+  if (swaps.length < 5 && hasSolanaTrackerKey() && Date.now() - started < 20_000) {
+    console.error(`helius found ${swaps.length} swaps, trying solana tracker`, wallet);
+    const st = await fetchTradesST(wallet, 1000).catch(() => ({ swaps: [] as Swap[], names: {} }));
     if (st.swaps.length > swaps.length) {
       swaps = st.swaps;
       names = st.names;
@@ -160,7 +169,7 @@ async function buildOrSkip(wallet: string): Promise<RoastResult> {
 // and the same wallet does not cost API calls again and again.
 export async function getRoast(wallet: string): Promise<RoastResult> {
   try {
-    return await unstable_cache(() => buildOrSkip(wallet), ["roast-v8", wallet], { revalidate: 3600 })();
+    return await unstable_cache(() => buildOrSkip(wallet), ["roast-v9", wallet], { revalidate: 3600 })();
   } catch (err) {
     if (err instanceof EmptyResult) return err.result;
     throw err;
