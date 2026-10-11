@@ -37,6 +37,11 @@ function describe(s: WalletStats, score: number): string {
   if (s.fastestPaperHands?.holdMinutes != null)
     lines.push(`fastest profitable exit: ${s.fastestPaperHands.name} after ${s.fastestPaperHands.holdMinutes.toFixed(0)} min`);
   if (s.avgHoldMinutes != null) lines.push(`average hold: ${s.avgHoldMinutes.toFixed(0)} min`);
+  if (s.avgBuy != null) lines.push(`average buy size: ${money(s.avgBuy, s.unit).replace("+", "")}`);
+  if (s.buyOnly)
+    lines.push(
+      "pattern: only buys, zero sells, many tiny repeated buys. looks like a bot, a copy trader, or someone who sells from a different wallet. roast that, but do not claim it as fact."
+    );
   return lines.join("\n");
 }
 
@@ -166,7 +171,7 @@ async function buildOrSkip(wallet: string): Promise<RoastResult> {
 // and the same wallet does not cost API calls again and again.
 export async function getRoast(wallet: string): Promise<RoastResult> {
   try {
-    return await unstable_cache(() => buildOrSkip(wallet), ["roast-v4", wallet], { revalidate: 3600 })();
+    return await unstable_cache(() => buildOrSkip(wallet), ["roast-v5", wallet], { revalidate: 3600 })();
   } catch (err) {
     if (err instanceof EmptyResult) return err.result;
     throw err;

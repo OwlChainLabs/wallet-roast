@@ -54,6 +54,13 @@ export default async function RoastPage({ params }: Props) {
         <p className="roast">{roast}</p>
       </div>
 
+      {stats.buyOnly && (
+        <p className="sub">
+          🤖 this wallet only buys and never sells. that usually means a bot, a copy trader, or sells
+          happening from another wallet, so the pnl here is not the full story.
+        </p>
+      )}
+
       <div className="card">
         <div className="grid">
           <div className="stat">
@@ -97,7 +104,7 @@ export default async function RoastPage({ params }: Props) {
       </div>
 
       <p className="foot">
-        {stats.unit === "USD" ? "full trade history, realized pnl in USD." : "based on the last ~100 swaps, realized pnl in SOL."} open bags not counted. for fun, not financial advice.
+        {stats.unit === "USD" ? "full trade history, realized pnl in USD." : `based on the last ${stats.trades} trades, realized pnl in SOL.`} open bags not counted. for fun, not financial advice.
         <br />
         open source · <a href="https://github.com/OwlChainLabs/wallet-roast">github</a>
       </p>

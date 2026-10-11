@@ -35,6 +35,8 @@ export type WalletStats = {
   biggestLoss: TokenResult | null;
   fastestPaperHands: TokenResult | null; // shortest hold that closed in profit
   bagsHeld: number; // tokens bought, never sold
+  buyOnly: boolean; // many buys, zero sells: looks like a bot or a wallet that sells elsewhere
+  avgBuy: number | null; // average buy size (same unit)
   avgHoldMinutes: number | null;
   firstTrade: number | null;
   lastTrade: number | null;
@@ -102,10 +104,16 @@ export function computeStats(
     biggestLoss: sorted.at(-1) && sorted.at(-1)!.pnl < 0 ? sorted.at(-1)! : null,
     fastestPaperHands: paper ?? null,
     bagsHeld: results.filter((r) => r.buys > 0 && r.sells === 0).length,
+    buyOnly: swaps.length >= 20 && swaps.every((s) => s.solDelta < 0),
+    avgBuy: avg(swaps.filter((s) => s.solDelta < 0).map((s) => -s.solDelta)),
     avgHoldMinutes: holds.length ? holds.reduce((a, b) => a + b, 0) / holds.length : null,
     firstTrade: times.length ? Math.min(...times) : null,
     lastTrade: times.length ? Math.max(...times) : null,
   };
+}
+
+function avg(xs: number[]): number | null {
+  return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : null;
 }
 
 // 1 = disaster, 10 = god-tier. Simple and explainable on purpose.
@@ -177,6 +185,11 @@ export function statsFromPnl(
     biggestLoss: sorted.at(-1) && sorted.at(-1)!.pnl < 0 ? sorted.at(-1)! : null,
     fastestPaperHands: paper ?? null,
     bagsHeld: results.filter((r) => r.buys > 0 && r.sells === 0).length,
+    buyOnly: results.length >= 5 && results.every((r) => r.sells === 0),
+    avgBuy: (() => {
+      const buys = results.reduce((n, r) => n + r.buys, 0);
+      return buys ? results.reduce((n, r) => n + r.solIn, 0) / buys : null;
+    })(),
     avgHoldMinutes: holds.length ? holds.reduce((a, b) => a + b, 0) / holds.length : null,
     firstTrade: times.length ? Math.min(...times) : null,
     lastTrade: times.length ? Math.max(...times) : null,
