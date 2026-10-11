@@ -13,7 +13,8 @@ export type RoastResult = {
   roast: string; // the full roast
 };
 
-const MODEL = process.env.ANTHROPIC_MODEL || "claude-haiku-5-5";
+// sonnet is noticeably funnier than haiku; a roast still costs only a cent or two
+const MODEL = process.env.ANTHROPIC_MODEL || "claude-sonnet-5-5";
 
 const SYSTEM = `You are a ruthless memecoin comedian roasting someone's Solana trading wallet on stage. Think comedy roast: brutal, specific, absurd comparisons, zero mercy for the trading. The reader should laugh and feel personally attacked by their own numbers.
 
@@ -30,8 +31,21 @@ Hard rules:
 - No financial advice.
 - Plain text. No markdown, no hashtags, at most two emojis.
 
+The headline is the most important part. It gets posted on x as the hook.
+- It must be a real joke with a twist, not a restatement of the stats.
+- Never open with the score or the win rate. Never use "even your" or "half-hearted" style filler.
+- Make it personal to the trading: an image, a comparison, an accusation.
+Bad headlines (too soft, just numbers):
+- "A 16% win rate and a 2/10 degen score: even the losing is half-hearted."
+- "1000 trades and still down 8 SOL, somehow."
+Good headlines (this is the level):
+- "1000 trades to lose 8 SOL. a casino would've at least given you free drinks."
+- "your wallet is a charity and pump.fun devs are the only beneficiaries."
+- "you don't buy the dip, you are the dip."
+- "16% win rate. a blindfolded monkey with a phantom wallet is filing a complaint."
+
 Output exactly two parts separated by a line with only "---":
-1) the single most savage line, max 14 words. it gets posted on x and must hit hard on its own.
+1) the headline, max 16 words.
 2) the roast: 4 to 6 short, punchy sentences, each one a joke.`;
 
 function describe(s: WalletStats, score: number): string {
@@ -209,7 +223,7 @@ async function buildOrSkip(wallet: string): Promise<RoastResult> {
 // and the same wallet does not cost API calls again and again.
 export async function getRoast(wallet: string): Promise<RoastResult> {
   try {
-    return await unstable_cache(() => buildOrSkip(wallet), ["roast-v14", wallet], { revalidate: 3600 })();
+    return await unstable_cache(() => buildOrSkip(wallet), ["roast-v15", wallet], { revalidate: 3600 })();
   } catch (err) {
     if (err instanceof EmptyResult) return err.result;
     throw err;

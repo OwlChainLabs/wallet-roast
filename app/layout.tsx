@@ -12,9 +12,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en">
       <body>
-        <a className="home" href="https://owlchainlabs.xyz">
-          <span>←</span> owlchain<b>labs</b>
-        </a>
+        <header className="topbar">
+          <a className="brand" href="https://owlchainlabs.xyz">
+            <img src="/owl.svg" alt="" width={34} height={34} />
+            <span className="wordmark">owlchain<span>labs</span></span>
+          </a>
+          <a className="topnav" href="/">wallet roast</a>
+        </header>
         {children}
       </body>
     </html>

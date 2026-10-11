@@ -109,12 +109,6 @@ button:disabled { opacity: 0.6; cursor: wait; }
 
 .btn.cta { display: block; text-align: center; margin-bottom: 8px; }
 
-.home { display: inline-flex; align-items: center; gap: 6px; margin: 20px 0 0 20px; padding: 7px 12px;
-        border-radius: 10px; border: 1px solid #222a4a; background: rgba(15,20,38,.7);
-        color: var(--muted); text-decoration: none; font-size: .9rem; font-weight: 600; }
-.home b { color: var(--green); }
-.home:hover { color: var(--text); border-color: var(--green); }
-
 /* roast result page: one screen, two columns */
 main.rp { max-width: 1120px; padding: 16px 20px 18px; display: grid; grid-template-columns: 1.25fr 1fr;
           gap: 22px; align-items: start; min-height: calc(100vh - 60px); align-content: center; }
@@ -157,3 +151,13 @@ main.rp { max-width: 1120px; padding: 16px 20px 18px; display: grid; grid-templa
   main.rp { grid-template-columns: 1fr; min-height: 0; }
   .rp-roast { padding: 22px; }
 }
+
+.topbar { max-width: 1120px; margin: 0 auto; padding: 18px 20px 0; display: flex; align-items: center; justify-content: space-between; }
+.topbar .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); }
+.topbar .brand img { display: block; transition: transform .2s; }
+.topbar .brand:hover img { transform: rotate(-8deg) scale(1.08); }
+.wordmark { font-size: 1.15rem; font-weight: 800; letter-spacing: -0.02em; }
+.wordmark span { color: var(--green); }
+.topnav { font-size: .9rem; font-weight: 600; color: var(--muted); text-decoration: none; padding: 8px 14px;
+          border: 1px solid #222a4a; border-radius: 10px; background: rgba(15,20,38,.7); }
+.topnav:hover { color: var(--text); border-color: var(--green); }
