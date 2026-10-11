@@ -17,7 +17,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <img src="/owl.svg" alt="" width={34} height={34} />
             <span className="wordmark">owlchain<span>labs</span></span>
           </a>
-          <a className="topnav" href="/">wallet roast</a>
         </header>
         {children}
       </body>

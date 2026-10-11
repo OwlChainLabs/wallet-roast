@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SITE_URL } from "@/lib/site";
 import { getRoast } from "@/lib/roast";
-import { isValidWallet, shortAddr } from "@/lib/validate";
+import { isValidWallet, shortAddr, shortHash } from "@/lib/validate";
 import { money } from "@/lib/pnl";
 
 export const maxDuration = 60;
@@ -12,7 +12,12 @@ type Props = { params: Promise<{ wallet: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { wallet } = await params;
   const title = `wallet roast · ${shortAddr(wallet)}`;
-  const image = `/api/og/${wallet}`;
+  // a new roast gets a new image url, so x and browsers never show an old card
+  let v = "0";
+  try {
+    v = shortHash((await getRoast(wallet)).title);
+  } catch {}
+  const image = `/api/og/${wallet}?v=${v}`;
   return {
     title,
     openGraph: { title, images: [image] },
@@ -42,7 +47,7 @@ export default async function RoastPage({ params }: Props) {
   const sol = (n: number) => money(n, stats.unit);
   // the card shows this roast; the text links the start page so others can roast theirs
   const shareText = `"${title}" 💀\n\njust got my solana wallet roasted by @OwlChainLabs\n\nroast yours 👉 ${SITE_URL.replace("https://", "")}\n\n`;
-  const shareUrl = `https://x.com/intent/post?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(`${SITE_URL}/roast/${wallet}`)}`;
+  const shareUrl = `https://x.com/intent/post?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(`${SITE_URL}/roast/${wallet}?r=${shortHash(title)}`)}`;
 
   const scoreColor = score >= 7 ? "var(--green)" : score >= 4 ? "#ffc857" : "var(--red)";
   const verdict = score >= 8 ? "certified chad" : score >= 6 ? "actually decent" : score >= 4 ? "mid at best" : score >= 2 ? "exit liquidity" : "financially cooked";
