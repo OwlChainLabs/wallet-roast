@@ -1,5 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { fetchSwaps, fetchTokenNames } from "./helius";
+import { fetchTradesST, hasSolanaTrackerKey } from "./solanatracker";
 import { computeStats, degenScore, type WalletStats } from "./pnl";
 
 export type RoastResult = {
@@ -78,9 +79,16 @@ async function askClaude(facts: string): Promise<{ title: string; roast: string 
 }
 
 async function buildRoast(wallet: string): Promise<RoastResult> {
-  const swaps = await fetchSwaps(wallet);
-  const mints = [...new Set(swaps.map((s) => s.mint))];
-  const names = await fetchTokenNames(mints);
+  let swaps;
+  let names: Record<string, string>;
+  if (hasSolanaTrackerKey()) {
+    // preferred: trades indexed per trader, works for busy wallets and terminals
+    ({ swaps, names } = await fetchTradesST(wallet));
+  } else {
+    // fallback: parse raw transactions from helius
+    swaps = await fetchSwaps(wallet);
+    names = await fetchTokenNames([...new Set(swaps.map((s) => s.mint))]);
+  }
   const stats = computeStats(wallet, swaps, names);
   const score = degenScore(stats);
 
@@ -115,7 +123,7 @@ async function buildOrSkip(wallet: string): Promise<RoastResult> {
 // and the same wallet does not cost API calls again and again.
 export async function getRoast(wallet: string): Promise<RoastResult> {
   try {
-    return await unstable_cache(() => buildOrSkip(wallet), ["roast-v2", wallet], { revalidate: 3600 })();
+    return await unstable_cache(() => buildOrSkip(wallet), ["roast-v3", wallet], { revalidate: 3600 })();
   } catch (err) {
     if (err instanceof EmptyResult) return err.result;
     throw err;

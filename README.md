@@ -7,7 +7,7 @@ paste a solana wallet. an ai roasts your trades.
 
 ## what it does
 
-1. loads the last ~100 swaps of a public solana address (helius)
+1. loads the last ~100 trades of a public solana address (solana tracker, helius as fallback)
 2. calculates realized pnl in SOL, win rate, best and worst trade, bags never sold
 3. gives a degen score from 1 to 10
 4. an ai writes a roast based only on those numbers
@@ -24,7 +24,8 @@ npm run dev
 ```
 
 you need:
-- a free api key from [helius.dev](https://helius.dev)
+- a free api key from [solanatracker.io](https://solanatracker.io) (trade history)
+- a free api key from [helius.dev](https://helius.dev) (fallback)
 - an api key from [console.anthropic.com](https://console.anthropic.com)
 
 ## how the numbers work
@@ -35,7 +36,7 @@ you need:
 
 ## stack
 
-next.js · helius · claude · vercel
+next.js · solana tracker · helius · claude · vercel
 
 ## license
 
