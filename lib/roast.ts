@@ -1,7 +1,7 @@
 import { unstable_cache } from "next/cache";
 import { fetchSwaps, fetchTokenNames } from "./helius";
-import { fetchPnlST, fetchTradesST, hasSolanaTrackerKey } from "./solanatracker";
-import { computeStats, degenScore, money, statsFromPnl, type WalletStats } from "./pnl";
+import { fetchTradesST, hasSolanaTrackerKey } from "./solanatracker";
+import { computeStats, degenScore, money, type WalletStats } from "./pnl";
 
 export type RoastResult = {
   stats: WalletStats;
@@ -58,7 +58,9 @@ async function askClaude(facts: string): Promise<{ title: string; roast: string 
     },
     body: JSON.stringify({
       model: MODEL,
-      max_tokens: 400,
+      max_tokens: 2000,
+      // haiku 5.5 thinks adaptively by default; a short roast needs little of it
+      output_config: { effort: "low" },
       system: SYSTEM,
       messages: [{ role: "user", content: `Roast this wallet:\n${facts}` }],
     }),
@@ -103,35 +105,11 @@ async function buildRoast(wallet: string): Promise<RoastResult> {
   let names: Record<string, string>;
   let stats: WalletStats;
   if (hasSolanaTrackerKey()) {
-    // preferred: full-history pnl per token (USD), works for busy wallets and terminals.
-    // run both at once. pnl is best (full history) but can be slow for huge wallets;
-    // recent trades are the backup and give us token symbols.
-    const [pnlRes, recentRes] = await Promise.allSettled([
-      fetchPnlST(wallet),
-      fetchTradesST(wallet, 300),
-    ]);
-    const recent =
-      recentRes.status === "fulfilled" ? recentRes.value : { swaps: [], names: {} as Record<string, string> };
-    if (recentRes.status === "rejected") console.error("recent trades failed", wallet, recentRes.reason);
+    // trades are indexed per trader (works for busy wallets and terminals).
+    // one page has up to 1000 trades; we compute pnl from them ourselves.
+    const recent = await fetchTradesST(wallet, 1000);
     names = recent.names;
-
-    if (pnlRes.status === "fulfilled") {
-      const tokens = pnlRes.value;
-      const missing = Object.entries(tokens)
-        .sort((a, b) => Math.abs(b[1].realized ?? 0) - Math.abs(a[1].realized ?? 0))
-        .map(([mint]) => mint)
-        .filter((m) => !names[m])
-        .slice(0, 100);
-      if (missing.length && process.env.HELIUS_API_KEY) {
-        Object.assign(names, await fetchTokenNames(missing));
-      }
-      stats = statsFromPnl(wallet, tokens, names);
-    } else if (recent.swaps.length > 0) {
-      console.error("pnl failed, using recent trades", wallet, pnlRes.reason);
-      stats = computeStats(wallet, recent.swaps, names);
-    } else {
-      throw new Error(`no data: pnl=${String(pnlRes.reason)} trades=${recentRes.status}`);
-    }
+    stats = computeStats(wallet, recent.swaps, names);
   } else {
     // fallback: parse raw transactions from helius
     const swaps = await fetchSwaps(wallet);
@@ -171,7 +149,7 @@ async function buildOrSkip(wallet: string): Promise<RoastResult> {
 // and the same wallet does not cost API calls again and again.
 export async function getRoast(wallet: string): Promise<RoastResult> {
   try {
-    return await unstable_cache(() => buildOrSkip(wallet), ["roast-v5", wallet], { revalidate: 3600 })();
+    return await unstable_cache(() => buildOrSkip(wallet), ["roast-v6", wallet], { revalidate: 3600 })();
   } catch (err) {
     if (err instanceof EmptyResult) return err.result;
     throw err;

@@ -7,7 +7,7 @@ paste a solana wallet. an ai roasts your trades.
 
 ## what it does
 
-1. loads the full trading pnl of a public solana address (solana tracker, helius as fallback)
+1. loads the last ~1000 trades of a public solana address (solana tracker, helius as fallback)
 2. calculates realized pnl, win rate, best and worst trade, bags never sold
 3. gives a degen score from 1 to 10
 4. an ai writes a roast based only on those numbers
@@ -30,7 +30,7 @@ you need:
 
 ## how the numbers work
 
-- with solana tracker: full history, realized pnl per token in USD
+- with solana tracker: last ~1000 trades, realized pnl in SOL
 - helius fallback: last ~100 SOL swaps, realized pnl in SOL
 - open bags are not counted in pnl
 - the score is simple on purpose: win rate and pnl move it up or down. see `lib/pnl.ts`

@@ -5,7 +5,7 @@ import type { Swap } from "./helius";
 import type { PnlToken } from "./pnl";
 
 const SOL_MINT = "So11111111111111111111111111111111111111112";
-const MAX_SWAPS = 100;
+const MAX_SWAPS = 1000;
 
 type Side = {
   address: string;
@@ -39,7 +39,7 @@ export async function fetchTradesST(
   const deadline = Date.now() + 20_000;
   let cursor: string | undefined;
 
-  for (let page = 0; page < 3 && swaps.length < maxSwaps; page++) {
+  for (let page = 0; page < 2 && swaps.length < maxSwaps; page++) {
     const left = deadline - Date.now();
     if (left < 1_500) break;
 
