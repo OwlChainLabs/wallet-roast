@@ -38,7 +38,7 @@ export async function GET(_req: Request, { params }: Ctx) {
         <div style={{ display: "flex", fontSize: 30, color: "#9aa0b8" }}>
           {`🦉 wallet roast · ${shortAddr(wallet)}`}
         </div>
-        <div style={{ display: "flex", fontSize: 68, fontWeight: 800, lineHeight: 1.15 }}>{title}</div>
+        <div style={{ display: "flex", fontSize: 58, fontWeight: 800, lineHeight: 1.15 }}>{title}</div>
         <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between" }}>
           <div style={{ display: "flex", flexDirection: "column" }}>
             <div style={{ fontSize: 26, color: "#9aa0b8" }}>degen score</div>

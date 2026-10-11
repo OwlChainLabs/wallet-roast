@@ -40,12 +40,13 @@ export default async function RoastPage({ params }: Props) {
 
   const { stats, score, title, roast } = result;
   const sol = (n: number) => money(n, stats.unit);
-  const shareText = `"${title}" 💀\n\nmy solana wallet just got roasted by @OwlChainLabs\n\nyour turn 👇`;
+  // the card shows this roast; the text links the start page so others can roast theirs
+  const shareText = `"${title}" 💀\n\njust got my solana wallet roasted by @OwlChainLabs\n\nroast yours 👉 ${SITE_URL.replace("https://", "")}\n\n`;
   const shareUrl = `https://x.com/intent/post?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(`${SITE_URL}/roast/${wallet}`)}`;
 
   return (
     <main>
-      <a href="/" style={{ textDecoration: "none" }}>← roast another</a>
+      <a className="btn cta" href="/">🔥 roast your own wallet</a>
 
       <div className="card">
         <p className="sub" style={{ margin: 0 }}>{shortAddr(wallet)}</p>

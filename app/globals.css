@@ -106,3 +106,5 @@ button:disabled { opacity: 0.6; cursor: wait; }
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
+
+.btn.cta { display: block; text-align: center; margin-bottom: 8px; }

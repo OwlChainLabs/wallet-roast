@@ -22,7 +22,7 @@ Rules:
 - No financial advice.
 - Plain text. No markdown, no hashtags, no emojis except at most two.
 Output exactly two parts separated by a line with only "---":
-1) a punchline title, max 8 words
+1) the single most savage line of the roast, max 14 words. this gets posted on x, so it must be funny and mean on its own, not a summary of numbers. one number is ok if it makes the joke hit harder.
 2) the roast, 4 to 6 short sentences`;
 
 function describe(s: WalletStats, score: number): string {
@@ -200,7 +200,7 @@ async function buildOrSkip(wallet: string): Promise<RoastResult> {
 // and the same wallet does not cost API calls again and again.
 export async function getRoast(wallet: string): Promise<RoastResult> {
   try {
-    return await unstable_cache(() => buildOrSkip(wallet), ["roast-v12", wallet], { revalidate: 3600 })();
+    return await unstable_cache(() => buildOrSkip(wallet), ["roast-v13", wallet], { revalidate: 3600 })();
   } catch (err) {
     if (err instanceof EmptyResult) return err.result;
     throw err;
