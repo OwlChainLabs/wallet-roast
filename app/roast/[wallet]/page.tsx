@@ -59,7 +59,7 @@ export default async function RoastPage({ params }: Props) {
         <div className="grid">
           <div className="stat">
             <div className="k">degen score</div>
-            <div className="score">{score}/10</div>
+            <div className="score" style={{ color: score >= 7 ? "var(--green)" : score >= 4 ? "#ffc857" : "var(--red)" }}>{score}/10</div>
           </div>
           <div className="stat">
             <div className="k">realized pnl</div>

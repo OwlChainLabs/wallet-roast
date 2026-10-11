@@ -39,7 +39,7 @@ export async function GET(_req: Request, { params }: Ctx) {
         <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between" }}>
           <div style={{ display: "flex", flexDirection: "column" }}>
             <div style={{ fontSize: 26, color: "#9aa0b8" }}>degen score</div>
-            <div style={{ fontSize: 96, fontWeight: 800, color: "#14f195" }}>{`${score}/10`}</div>
+            <div style={{ fontSize: 96, fontWeight: 800, color: score >= 7 ? "#14f195" : score >= 4 ? "#ffc857" : "#ff5c7a" }}>{`${score}/10`}</div>
           </div>
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
             <div style={{ fontSize: 26, color: "#9aa0b8" }}>realized pnl</div>
