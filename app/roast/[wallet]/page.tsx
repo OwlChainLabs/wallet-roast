@@ -44,71 +44,53 @@ export default async function RoastPage({ params }: Props) {
   const shareText = `"${title}" 💀\n\njust got my solana wallet roasted by @OwlChainLabs\n\nroast yours 👉 ${SITE_URL.replace("https://", "")}\n\n`;
   const shareUrl = `https://x.com/intent/post?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(`${SITE_URL}/roast/${wallet}`)}`;
 
+  const scoreColor = score >= 7 ? "var(--green)" : score >= 4 ? "#ffc857" : "var(--red)";
+  const verdict = score >= 8 ? "certified chad" : score >= 6 ? "actually decent" : score >= 4 ? "mid at best" : score >= 2 ? "exit liquidity" : "financially cooked";
+
   return (
-    <main>
-      <a className="btn cta" href="/">🔥 roast your own wallet</a>
+    <main className="rp">
+      <section className="rp-roast">
+        <span className="addr">{shortAddr(wallet)}</span>
+        <h1 className="rp-title">{title}</h1>
+        <p className="rp-text">{roast}</p>
+      </section>
 
-      <div className="card">
-        <p className="sub" style={{ margin: 0 }}>{shortAddr(wallet)}</p>
-        <p className="title">{title}</p>
-        <p className="roast">{roast}</p>
-      </div>
-
-      {result.unreadable ? (
-        <div className="actions">
-          <a className="btn ghost" href="/">roast another</a>
-        </div>
-      ) : (
-      <>
-
-      <div className="card">
-        <div className="grid">
-          <div className="stat">
-            <div className="k">degen score</div>
-            <div className="score" style={{ color: score >= 7 ? "var(--green)" : score >= 4 ? "#ffc857" : "var(--red)" }}>{score}/10</div>
-          </div>
-          <div className="stat">
-            <div className="k">net pnl</div>
-            <div className={`v ${stats.totalPnl >= 0 ? "pos" : "neg"}`}>{sol(stats.totalPnl)}</div>
-          </div>
-          <div className="stat">
-            <div className="k">win rate</div>
-            <div className="v">{(stats.winRate * 100).toFixed(0)}%</div>
-          </div>
-          <div className="stat">
-            <div className="k">trades</div>
-            <div className="v">{stats.trades}</div>
-          </div>
-          {stats.biggestWin && (
-            <div className="stat">
-              <div className="k">best trade</div>
-              <div className="v pos">{`${stats.biggestWin.name} ${sol(stats.biggestWin.pnl)}`}</div>
+      <aside className="rp-side">
+        {!result.unreadable && (
+          <>
+            <div className="rp-score">
+              <div>
+                <div className="k">degen score</div>
+                <div className="big" style={{ color: scoreColor }}>{score}<span>/10</span></div>
+              </div>
+              <div className="verdict" style={{ color: scoreColor, borderColor: scoreColor }}>{verdict}</div>
             </div>
-          )}
-          {stats.biggestLoss && (
-            <div className="stat">
-              <div className="k">worst trade</div>
-              <div className="v neg">{`${stats.biggestLoss.name} ${sol(stats.biggestLoss.pnl)}`}</div>
+
+            <div className="rp-grid">
+              <div className="stat"><div className="k">net pnl</div><div className={`v ${stats.totalPnl >= 0 ? "pos" : "neg"}`}>{sol(stats.totalPnl)}</div></div>
+              <div className="stat"><div className="k">win rate</div><div className="v">{(stats.winRate * 100).toFixed(0)}%</div></div>
+              <div className="stat"><div className="k">trades</div><div className="v">{stats.trades}</div></div>
+              <div className="stat"><div className="k">bags never sold</div><div className="v">{stats.bagsHeld}</div></div>
+              {stats.biggestWin && (
+                <div className="stat"><div className="k">best trade</div><div className="v pos">{`${stats.biggestWin.name} ${sol(stats.biggestWin.pnl)}`}</div></div>
+              )}
+              {stats.biggestLoss && (
+                <div className="stat"><div className="k">worst trade</div><div className="v neg">{`${stats.biggestLoss.name} ${sol(stats.biggestLoss.pnl)}`}</div></div>
+              )}
             </div>
-          )}
-          <div className="stat">
-            <div className="k">bags never sold</div>
-            <div className="v">{stats.bagsHeld}</div>
-          </div>
-        </div>
-      </div>
 
-      <div className="actions">
-        <a className="btn" href={shareUrl} target="_blank" rel="noopener noreferrer">share on x</a>
-        <a className="btn ghost" href="/">roast another</a>
-      </div>
-      </>
-      )}
+            <a className="share" href={shareUrl} target="_blank" rel="noopener noreferrer">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+              share your roast
+            </a>
+          </>
+        )}
+        <a className="again" href="/">🔥 roast your own wallet</a>
+      </aside>
 
-      <p className="foot">
-        {`based on the last ${stats.trades} trades. net pnl in ${stats.unit} from on-chain balances, incl. fees and tips. coins never sold count as lost.`} for fun, not financial advice.
-        <br />
-        open source · <a href="https://github.com/OwlChainLabs/wallet-roast">github</a>
+      <p className="rp-foot">
+        {`last ${stats.trades} trades · net pnl in ${stats.unit} from on-chain balances, incl. fees · unsold coins count as lost · for fun, not financial advice · `}
+        <a href="https://github.com/OwlChainLabs/wallet-roast">open source</a>
       </p>
     </main>
   );
