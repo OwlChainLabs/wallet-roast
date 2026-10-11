@@ -60,7 +60,7 @@ async function askClaude(facts: string): Promise<{ title: string; roast: string 
       messages: [{ role: "user", content: `Roast this wallet:\n${facts}` }],
     }),
     cache: "no-store",
-    signal: AbortSignal.timeout(25_000),
+    signal: AbortSignal.timeout(20_000),
   });
   if (!res.ok) throw new Error(`anthropic error ${res.status}`);
   const data = await res.json();

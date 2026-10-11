@@ -87,21 +87,31 @@ export async function fetchSwaps(wallet: string, maxPages = 6): Promise<Swap[]> 
   let before: string | undefined;
   let beforeParam = "before";
 
-  const started = Date.now();
+  // hard budget for the whole search, every request must finish inside it
+  const deadline = Date.now() + 20_000;
+  const remaining = () => deadline - Date.now();
+
   for (let page = 0; page < maxPages; page++) {
-    if (Date.now() - started > 20_000) break;
+    if (remaining() < 1_500) break;
     const url = new URL(`https://api.helius.xyz/v0/addresses/${wallet}/transactions`);
     url.searchParams.set("api-key", key());
     url.searchParams.set("type", "SWAP");
     url.searchParams.set("limit", "100");
     if (before) url.searchParams.set(beforeParam, before);
 
-    let res = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(10_000) });
-
-    // free tier rate limit: wait a moment and try once more
-    if (res.status === 429) {
-      await new Promise((r) => setTimeout(r, 1200));
-      res = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(10_000) });
+    let res: Response;
+    try {
+      res = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(Math.min(8_000, remaining())) });
+      // free tier rate limit: wait a moment and try once more if there is time
+      if (res.status === 429 && remaining() > 3_000) {
+        await new Promise((r) => setTimeout(r, 1_000));
+        res = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(Math.min(8_000, remaining())) });
+      }
+    } catch (err) {
+      // timed out: roast what we have, or give up if we have nothing
+      console.error(`helius timeout for ${wallet}`, err);
+      if (swaps.length > 0) break;
+      throw new Error("helius timeout");
     }
 
     if (!res.ok) {
@@ -149,9 +159,11 @@ export async function fetchTokenNames(mints: string[]): Promise<Record<string, s
       params: { ids: mints.slice(0, 100) },
     }),
     cache: "no-store",
-  });
-  if (!res.ok) return out;
-  const data = await res.json();
+    signal: AbortSignal.timeout(5_000),
+  }).catch(() => null);
+  // names are nice to have, never block the roast on them
+  if (!res || !res.ok) return out;
+  const data = await res.json().catch(() => null);
   for (const a of data?.result ?? []) {
     if (!a?.id) continue;
     const sym = a?.content?.metadata?.symbol || a?.token_info?.symbol;
