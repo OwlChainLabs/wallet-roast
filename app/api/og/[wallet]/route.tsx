@@ -1,6 +1,7 @@
 import { ImageResponse } from "next/og";
 import { getRoast } from "@/lib/roast";
 import { isValidWallet, shortAddr } from "@/lib/validate";
+import { money, type Unit } from "@/lib/pnl";
 
 export const maxDuration = 60;
 
@@ -14,11 +15,13 @@ export async function GET(_req: Request, { params }: Ctx) {
   let title = "get your wallet roasted";
   let score = 0;
   let pnl = 0;
+  let unit: Unit = "SOL";
   try {
     const r = await getRoast(wallet);
     title = r.title;
     score = r.score;
     pnl = r.stats.totalPnl;
+    unit = r.stats.unit;
   } catch {
     // fall back to a generic card
   }
@@ -44,7 +47,7 @@ export async function GET(_req: Request, { params }: Ctx) {
           <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}>
             <div style={{ fontSize: 26, color: "#9aa0b8" }}>realized pnl</div>
             <div style={{ fontSize: 56, fontWeight: 800, color: pnl >= 0 ? "#14f195" : "#ff5c7a" }}>
-              {`${pnl >= 0 ? "+" : ""}${pnl.toFixed(2)} SOL`}
+              {money(pnl, unit)}
             </div>
             <div style={{ fontSize: 24, color: "#9aa0b8", marginTop: 8 }}>@OwlChainLabs</div>
           </div>

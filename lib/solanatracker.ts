@@ -2,6 +2,7 @@
 // so it works for busy wallets and trading terminals (Axiom, Photon, ...).
 // Only the public address is used.
 import type { Swap } from "./helius";
+import type { PnlToken } from "./pnl";
 
 const SOL_MINT = "So11111111111111111111111111111111111111112";
 const MAX_SWAPS = 100;
@@ -94,4 +95,22 @@ export async function fetchTradesST(
   }
 
   return { swaps: swaps.slice(0, MAX_SWAPS), names };
+}
+
+// Full-history pnl per token (USD). One request, no paging.
+export async function fetchPnlST(wallet: string): Promise<Record<string, PnlToken>> {
+  const key = process.env.SOLANATRACKER_API_KEY;
+  if (!key) throw new Error("SOLANATRACKER_API_KEY is not set");
+  const res = await fetch(`https://data.solanatracker.io/pnl/${wallet}`, {
+    headers: { "x-api-key": key },
+    cache: "no-store",
+    signal: AbortSignal.timeout(20_000),
+  });
+  if (!res.ok) {
+    const body = await res.text().catch(() => "");
+    console.error(`solanatracker pnl ${res.status} for ${wallet}: ${body.slice(0, 300)}`);
+    throw new Error(`solanatracker pnl error ${res.status}`);
+  }
+  const data = await res.json();
+  return (data?.tokens ?? {}) as Record<string, PnlToken>;
 }

@@ -1,7 +1,7 @@
 import { unstable_cache } from "next/cache";
 import { fetchSwaps, fetchTokenNames } from "./helius";
-import { fetchTradesST, hasSolanaTrackerKey } from "./solanatracker";
-import { computeStats, degenScore, type WalletStats } from "./pnl";
+import { fetchPnlST, fetchTradesST, hasSolanaTrackerKey } from "./solanatracker";
+import { computeStats, degenScore, money, statsFromPnl, type WalletStats } from "./pnl";
 
 export type RoastResult = {
   stats: WalletStats;
@@ -22,13 +22,10 @@ Output exactly two parts separated by a line with only "---":
 1) a punchline title, max 8 words
 2) the roast, 4 to 6 short sentences`;
 
-function fmt(n: number) {
-  return `${n >= 0 ? "+" : ""}${n.toFixed(2)} SOL`;
-}
-
 function describe(s: WalletStats, score: number): string {
+  const fmt = (n: number) => money(n, s.unit);
   const lines = [
-    `swaps: ${s.trades}`,
+    `trades: ${s.trades}`,
     `tokens traded: ${s.tokensTraded}`,
     `realized pnl: ${fmt(s.totalPnl)}`,
     `win rate: ${(s.winRate * 100).toFixed(0)}%`,
@@ -71,34 +68,61 @@ async function askClaude(facts: string): Promise<{ title: string; roast: string 
     .join("")
     .trim();
 
-  const [title, ...rest] = text.split(/\n-{3,}\n/);
+  if (!text) {
+    console.error("claude returned no text", JSON.stringify(data).slice(0, 300));
+    throw new Error("empty roast");
+  }
+
+  // expected: title, a line of dashes, roast. be lenient if the model drifts.
+  const parts = text.split(/^\s*-{3,}\s*$/m).map((p) => p.trim()).filter(Boolean);
+  let title = parts[0] ?? "";
+  let roast = parts.slice(1).join("\n").trim();
+  if (!roast) {
+    const lines = text.split("\n").map((l) => l.trim()).filter(Boolean);
+    title = lines[0] ?? "";
+    roast = lines.slice(1).join(" ");
+  }
   return {
-    title: (title ?? "").trim().replace(/^["']|["']$/g, ""),
-    roast: rest.join("\n").trim() || text,
+    title: title.replace(/^(title:|1\)|\*+)\s*/i, "").replace(/^["']|["']$/g, "").trim(),
+    roast: roast.replace(/^(roast:|2\))\s*/i, "").trim() || text,
   };
 }
 
 async function buildRoast(wallet: string): Promise<RoastResult> {
-  let swaps;
   let names: Record<string, string>;
+  let stats: WalletStats;
   if (hasSolanaTrackerKey()) {
-    // preferred: trades indexed per trader, works for busy wallets and terminals
-    ({ swaps, names } = await fetchTradesST(wallet));
+    // preferred: full-history pnl per token (USD), works for busy wallets and terminals.
+    // recent trades are only used to get token symbols.
+    const [tokens, recent] = await Promise.all([
+      fetchPnlST(wallet),
+      fetchTradesST(wallet).catch(() => ({ swaps: [], names: {} as Record<string, string> })),
+    ]);
+    names = recent.names;
+    const missing = Object.entries(tokens)
+      .sort((a, b) => Math.abs(b[1].realized ?? 0) - Math.abs(a[1].realized ?? 0))
+      .map(([mint]) => mint)
+      .filter((m) => !names[m])
+      .slice(0, 100);
+    if (missing.length && process.env.HELIUS_API_KEY) {
+      Object.assign(names, await fetchTokenNames(missing));
+    }
+    stats = statsFromPnl(wallet, tokens, names);
   } else {
     // fallback: parse raw transactions from helius
-    swaps = await fetchSwaps(wallet);
+    const swaps = await fetchSwaps(wallet);
     names = await fetchTokenNames([...new Set(swaps.map((s) => s.mint))]);
+    stats = computeStats(wallet, swaps, names);
   }
-  const stats = computeStats(wallet, swaps, names);
   const score = degenScore(stats);
 
   if (stats.trades === 0) {
     return {
       stats,
       score,
-      title: "No swaps found. Suspiciously clean.",
+      title: "No trades found. Suspiciously clean.",
       roast:
-        "We went through your latest transactions and found zero SOL swaps. Either you are a genius who never touched a memecoin, you trade through a bot we can not read yet, or you are just scared. Honestly, all three beat most wallets we roast.",
+        "We went through your latest transactions and found zero trades. Either you are a genius who never touched a memecoin, you trade through a bot we can not read yet, or you are just scared. Honestly, all three beat most wallets we roast.",
     };
   }
 
@@ -123,7 +147,7 @@ async function buildOrSkip(wallet: string): Promise<RoastResult> {
 // and the same wallet does not cost API calls again and again.
 export async function getRoast(wallet: string): Promise<RoastResult> {
   try {
-    return await unstable_cache(() => buildOrSkip(wallet), ["roast-v3", wallet], { revalidate: 3600 })();
+    return await unstable_cache(() => buildOrSkip(wallet), ["roast-v4", wallet], { revalidate: 3600 })();
   } catch (err) {
     if (err instanceof EmptyResult) return err.result;
     throw err;

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getRoast } from "@/lib/roast";
 import { isValidWallet, shortAddr } from "@/lib/validate";
+import { money } from "@/lib/pnl";
 
 export const maxDuration = 60;
 
@@ -16,10 +17,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     openGraph: { title, images: [image] },
     twitter: { card: "summary_large_image", title, images: [image] },
   };
-}
-
-function sol(n: number) {
-  return `${n >= 0 ? "+" : ""}${n.toFixed(2)} SOL`;
 }
 
 export default async function RoastPage({ params }: Props) {
@@ -41,6 +38,7 @@ export default async function RoastPage({ params }: Props) {
   }
 
   const { stats, score, title, roast } = result;
+  const sol = (n: number) => money(n, stats.unit);
   const host = process.env.NEXT_PUBLIC_SITE_URL || (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "");
   const site = host;
   const shareText = `my solana wallet just got roasted: "${title}" 💀\n\ndegen score ${score}/10\n\nget roasted by @OwlChainLabs`;
@@ -71,7 +69,7 @@ export default async function RoastPage({ params }: Props) {
             <div className="v">{(stats.winRate * 100).toFixed(0)}%</div>
           </div>
           <div className="stat">
-            <div className="k">swaps</div>
+            <div className="k">trades</div>
             <div className="v">{stats.trades}</div>
           </div>
           {stats.biggestWin && (
@@ -99,7 +97,7 @@ export default async function RoastPage({ params }: Props) {
       </div>
 
       <p className="foot">
-        based on the last ~100 swaps. realized pnl in SOL, open bags not counted. for fun, not financial advice.
+        {stats.unit === "USD" ? "full trade history, realized pnl in USD." : "based on the last ~100 swaps, realized pnl in SOL."} open bags not counted. for fun, not financial advice.
         <br />
         open source · <a href="https://github.com/OwlChainLabs/wallet-roast">github</a>
       </p>
