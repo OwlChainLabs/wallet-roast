@@ -79,7 +79,10 @@ function toSwap(tx: EnhancedTx, wallet: string): Swap | null {
 }
 
 // Fetch up to `maxPages` pages (100 tx each) of SWAP transactions.
-export async function fetchSwaps(wallet: string, maxPages = 10): Promise<Swap[]> {
+// how many recent swaps we look at (keeps it fast and cheap)
+const MAX_SWAPS = 100;
+
+export async function fetchSwaps(wallet: string, maxPages = 3): Promise<Swap[]> {
   const swaps: Swap[] = [];
   let before: string | undefined;
 
@@ -121,9 +124,10 @@ export async function fetchSwaps(wallet: string, maxPages = 10): Promise<Swap[]>
       if (s) swaps.push(s);
     }
     before = txs[txs.length - 1].signature;
+    if (swaps.length >= MAX_SWAPS) break;
     if (txs.length < 100) break;
   }
-  return swaps;
+  return swaps.slice(0, MAX_SWAPS);
 }
 
 // Look up token names/symbols for a list of mints (Helius DAS).

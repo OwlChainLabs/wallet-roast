@@ -7,7 +7,7 @@ paste a solana wallet. an ai roasts your trades.
 
 ## what it does
 
-1. loads the last ~500 swaps of a public solana address (helius)
+1. loads the last ~100 swaps of a public solana address (helius)
 2. calculates realized pnl in SOL, win rate, best and worst trade, bags never sold
 3. gives a degen score from 1 to 10
 4. an ai writes a roast based only on those numbers

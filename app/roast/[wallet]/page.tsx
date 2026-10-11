@@ -99,7 +99,7 @@ export default async function RoastPage({ params }: Props) {
       </div>
 
       <p className="foot">
-        based on the last ~500 swaps. realized pnl in SOL, open bags not counted. for fun, not financial advice.
+        based on the last ~100 swaps. realized pnl in SOL, open bags not counted. for fun, not financial advice.
         <br />
         open source · <a href="https://github.com/OwlChainLabs/wallet-roast">github</a>
       </p>
