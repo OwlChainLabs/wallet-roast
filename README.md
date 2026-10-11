@@ -2,6 +2,8 @@
 
 paste a solana wallet. an ai roasts your trades.
 
+**try it: [roast.owlchainlabs.xyz](https://roast.owlchainlabs.xyz)**
+
 > **no private keys. ever.** wallet-roast only reads public on-chain data.
 > no wallet connect, no signing, nothing to approve.
 
