@@ -108,3 +108,9 @@ button:disabled { opacity: 0.6; cursor: wait; }
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .btn.cta { display: block; text-align: center; margin-bottom: 8px; }
+
+.home { display: inline-flex; align-items: center; gap: 6px; margin: 20px 0 0 20px; padding: 7px 12px;
+        border-radius: 10px; border: 1px solid #222a4a; background: rgba(15,20,38,.7);
+        color: var(--muted); text-decoration: none; font-size: .9rem; font-weight: 600; }
+.home b { color: var(--green); }
+.home:hover { color: var(--text); border-color: var(--green); }

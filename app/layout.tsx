@@ -11,7 +11,12 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <a className="home" href="https://owlchainlabs.xyz">
+          <span>←</span> owlchain<b>labs</b>
+        </a>
+        {children}
+      </body>
     </html>
   );
 }
