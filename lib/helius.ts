@@ -87,19 +87,21 @@ export async function fetchSwaps(wallet: string, maxPages = 6): Promise<Swap[]> 
   let before: string | undefined;
   let beforeParam = "before";
 
+  const started = Date.now();
   for (let page = 0; page < maxPages; page++) {
+    if (Date.now() - started > 20_000) break;
     const url = new URL(`https://api.helius.xyz/v0/addresses/${wallet}/transactions`);
     url.searchParams.set("api-key", key());
     url.searchParams.set("type", "SWAP");
     url.searchParams.set("limit", "100");
     if (before) url.searchParams.set(beforeParam, before);
 
-    let res = await fetch(url, { cache: "no-store" });
+    let res = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(10_000) });
 
     // free tier rate limit: wait a moment and try once more
     if (res.status === 429) {
       await new Promise((r) => setTimeout(r, 1200));
-      res = await fetch(url, { cache: "no-store" });
+      res = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(10_000) });
     }
 
     if (!res.ok) {
