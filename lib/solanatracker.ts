@@ -28,7 +28,8 @@ export function hasSolanaTrackerKey(): boolean {
 }
 
 export async function fetchTradesST(
-  wallet: string
+  wallet: string,
+  maxSwaps = MAX_SWAPS
 ): Promise<{ swaps: Swap[]; names: Record<string, string> }> {
   const key = process.env.SOLANATRACKER_API_KEY;
   if (!key) throw new Error("SOLANATRACKER_API_KEY is not set");
@@ -38,7 +39,7 @@ export async function fetchTradesST(
   const deadline = Date.now() + 20_000;
   let cursor: string | undefined;
 
-  for (let page = 0; page < 3 && swaps.length < MAX_SWAPS; page++) {
+  for (let page = 0; page < 3 && swaps.length < maxSwaps; page++) {
     const left = deadline - Date.now();
     if (left < 1_500) break;
 
@@ -94,18 +95,27 @@ export async function fetchTradesST(
     cursor = String(data.nextCursor);
   }
 
-  return { swaps: swaps.slice(0, MAX_SWAPS), names };
+  return { swaps: swaps.slice(0, maxSwaps), names };
 }
 
 // Full-history pnl per token (USD). One request, no paging.
-export async function fetchPnlST(wallet: string): Promise<Record<string, PnlToken>> {
+export async function fetchPnlST(
+  wallet: string,
+  timeoutMs = 25_000
+): Promise<Record<string, PnlToken>> {
   const key = process.env.SOLANATRACKER_API_KEY;
   if (!key) throw new Error("SOLANATRACKER_API_KEY is not set");
-  const res = await fetch(`https://data.solanatracker.io/pnl/${wallet}`, {
-    headers: { "x-api-key": key },
-    cache: "no-store",
-    signal: AbortSignal.timeout(20_000),
-  });
+  let res: Response;
+  try {
+    res = await fetch(`https://data.solanatracker.io/pnl/${wallet}`, {
+      headers: { "x-api-key": key },
+      cache: "no-store",
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+  } catch (err) {
+    console.error(`solanatracker pnl timeout after ${timeoutMs}ms for ${wallet}`);
+    throw err;
+  }
   if (!res.ok) {
     const body = await res.text().catch(() => "");
     console.error(`solanatracker pnl ${res.status} for ${wallet}: ${body.slice(0, 300)}`);

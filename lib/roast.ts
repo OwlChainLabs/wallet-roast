@@ -59,8 +59,14 @@ async function askClaude(facts: string): Promise<{ title: string; roast: string 
     }),
     cache: "no-store",
     signal: AbortSignal.timeout(20_000),
+  }).catch((err) => {
+    console.error("claude timeout or network error", err?.name);
+    throw err;
   });
-  if (!res.ok) throw new Error(`anthropic error ${res.status}`);
+  if (!res.ok) {
+    console.error("claude error", res.status, (await res.text().catch(() => "")).slice(0, 300));
+    throw new Error(`anthropic error ${res.status}`);
+  }
   const data = await res.json();
   const text: string = (data?.content ?? [])
     .filter((b: { type: string }) => b.type === "text")
@@ -93,21 +99,34 @@ async function buildRoast(wallet: string): Promise<RoastResult> {
   let stats: WalletStats;
   if (hasSolanaTrackerKey()) {
     // preferred: full-history pnl per token (USD), works for busy wallets and terminals.
-    // recent trades are only used to get token symbols.
-    const [tokens, recent] = await Promise.all([
+    // run both at once. pnl is best (full history) but can be slow for huge wallets;
+    // recent trades are the backup and give us token symbols.
+    const [pnlRes, recentRes] = await Promise.allSettled([
       fetchPnlST(wallet),
-      fetchTradesST(wallet).catch(() => ({ swaps: [], names: {} as Record<string, string> })),
+      fetchTradesST(wallet, 300),
     ]);
+    const recent =
+      recentRes.status === "fulfilled" ? recentRes.value : { swaps: [], names: {} as Record<string, string> };
+    if (recentRes.status === "rejected") console.error("recent trades failed", wallet, recentRes.reason);
     names = recent.names;
-    const missing = Object.entries(tokens)
-      .sort((a, b) => Math.abs(b[1].realized ?? 0) - Math.abs(a[1].realized ?? 0))
-      .map(([mint]) => mint)
-      .filter((m) => !names[m])
-      .slice(0, 100);
-    if (missing.length && process.env.HELIUS_API_KEY) {
-      Object.assign(names, await fetchTokenNames(missing));
+
+    if (pnlRes.status === "fulfilled") {
+      const tokens = pnlRes.value;
+      const missing = Object.entries(tokens)
+        .sort((a, b) => Math.abs(b[1].realized ?? 0) - Math.abs(a[1].realized ?? 0))
+        .map(([mint]) => mint)
+        .filter((m) => !names[m])
+        .slice(0, 100);
+      if (missing.length && process.env.HELIUS_API_KEY) {
+        Object.assign(names, await fetchTokenNames(missing));
+      }
+      stats = statsFromPnl(wallet, tokens, names);
+    } else if (recent.swaps.length > 0) {
+      console.error("pnl failed, using recent trades", wallet, pnlRes.reason);
+      stats = computeStats(wallet, recent.swaps, names);
+    } else {
+      throw new Error(`no data: pnl=${String(pnlRes.reason)} trades=${recentRes.status}`);
     }
-    stats = statsFromPnl(wallet, tokens, names);
   } else {
     // fallback: parse raw transactions from helius
     const swaps = await fetchSwaps(wallet);
