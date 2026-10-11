@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { headers } from "next/headers";
 import { getRoast } from "@/lib/roast";
 import { isValidWallet, shortAddr } from "@/lib/validate";
 import { money } from "@/lib/pnl";
@@ -39,8 +40,10 @@ export default async function RoastPage({ params }: Props) {
 
   const { stats, score, title, roast } = result;
   const sol = (n: number) => money(n, stats.unit);
-  const host = process.env.NEXT_PUBLIC_SITE_URL || (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "");
-  const site = host;
+  // share links use the domain the visitor came in on (e.g. roast.owlchainlabs.xyz)
+  const h = await headers();
+  const host = h.get("x-forwarded-host") ?? h.get("host");
+  const site = process.env.NEXT_PUBLIC_SITE_URL || (host ? `https://${host}` : "");
   const shareText = `my solana wallet just got roasted: "${title}" 💀\n\ndegen score ${score}/10\n\nget roasted by @OwlChainLabs`;
   const shareUrl = `https://x.com/intent/post?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(`${site}/roast/${wallet}`)}`;
 
