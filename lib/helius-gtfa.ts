@@ -98,7 +98,7 @@ export async function fetchOwnTrades(wallet: string): Promise<Swap[]> {
           {
             transactionDetails: "full",
             encoding: "json",
-            maxSupportedTransactionVersion: 0,
+            maxSupportedTransactionVersion: 1,
             sortOrder: "desc",
             limit: 100,
             ...(paginationToken ? { paginationToken } : {}),

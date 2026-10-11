@@ -131,7 +131,8 @@ async function buildRoast(wallet: string): Promise<RoastResult> {
   if (swaps.length < 5 && hasSolanaTrackerKey() && Date.now() - started < 20_000) {
     console.error(`helius found ${swaps.length} swaps, trying solana tracker`, wallet);
     const st = await fetchTradesST(wallet, 1000).catch(() => ({ swaps: [] as Swap[], names: {} }));
-    if (st.swaps.length > swaps.length) {
+    const stSells = st.swaps.filter((x) => x.tokenDelta < 0).length;
+    if (st.swaps.length > swaps.length && stSells > 0) {
       swaps = st.swaps;
       names = st.names;
       source = "solanatracker";
@@ -192,7 +193,7 @@ async function buildOrSkip(wallet: string): Promise<RoastResult> {
 // and the same wallet does not cost API calls again and again.
 export async function getRoast(wallet: string): Promise<RoastResult> {
   try {
-    return await unstable_cache(() => buildOrSkip(wallet), ["roast-v10", wallet], { revalidate: 3600 })();
+    return await unstable_cache(() => buildOrSkip(wallet), ["roast-v11", wallet], { revalidate: 3600 })();
   } catch (err) {
     if (err instanceof EmptyResult) return err.result;
     throw err;
