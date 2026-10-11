@@ -78,11 +78,12 @@ function toSwap(tx: EnhancedTx, wallet: string): Swap | null {
   };
 }
 
-// Fetch up to `maxPages` pages (100 tx each) of SWAP transactions.
+// Fetch the latest transactions unfiltered (fast even for busy wallets)
+// and pick out the swaps ourselves. Up to `maxPages` pages of 100 tx.
 // how many recent swaps we look at (keeps it fast and cheap)
 const MAX_SWAPS = 100;
 
-export async function fetchSwaps(wallet: string, maxPages = 6): Promise<Swap[]> {
+export async function fetchSwaps(wallet: string, maxPages = 4): Promise<Swap[]> {
   const swaps: Swap[] = [];
   let before: string | undefined;
   let beforeParam = "before";
@@ -95,7 +96,6 @@ export async function fetchSwaps(wallet: string, maxPages = 6): Promise<Swap[]> 
     if (remaining() < 1_500) break;
     const url = new URL(`https://api.helius.xyz/v0/addresses/${wallet}/transactions`);
     url.searchParams.set("api-key", key());
-    url.searchParams.set("type", "SWAP");
     url.searchParams.set("limit", "100");
     if (before) url.searchParams.set(beforeParam, before);
 

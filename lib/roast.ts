@@ -88,9 +88,9 @@ async function buildRoast(wallet: string): Promise<RoastResult> {
     return {
       stats,
       score,
-      title: "No trades. Smartest wallet on Solana.",
+      title: "No swaps found. Suspiciously clean.",
       roast:
-        "We looked everywhere and found zero swaps. Either you are a genius who never touched a memecoin, or you are scared. Honestly, both beat most wallets we roast.",
+        "We went through your latest transactions and found zero SOL swaps. Either you are a genius who never touched a memecoin, you trade through a bot we can not read yet, or you are just scared. Honestly, all three beat most wallets we roast.",
     };
   }
 
