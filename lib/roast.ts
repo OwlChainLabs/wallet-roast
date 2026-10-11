@@ -98,7 +98,26 @@ async function buildRoast(wallet: string): Promise<RoastResult> {
   return { stats, score, title, roast };
 }
 
+// Results with zero swaps are not cached (could be a temporary data issue).
+class EmptyResult extends Error {
+  constructor(public result: RoastResult) {
+    super("empty");
+  }
+}
+
+async function buildOrSkip(wallet: string): Promise<RoastResult> {
+  const r = await buildRoast(wallet);
+  if (r.stats.trades === 0) throw new EmptyResult(r); // errors are never cached
+  return r;
+}
+
 // Cache per wallet for 1 hour so the page and the share image reuse one result
 // and the same wallet does not cost API calls again and again.
-export const getRoast = (wallet: string) =>
-  unstable_cache(() => buildRoast(wallet), ["roast", wallet], { revalidate: 3600 })();
+export async function getRoast(wallet: string): Promise<RoastResult> {
+  try {
+    return await unstable_cache(() => buildOrSkip(wallet), ["roast-v2", wallet], { revalidate: 3600 })();
+  } catch (err) {
+    if (err instanceof EmptyResult) return err.result;
+    throw err;
+  }
+}
