@@ -82,16 +82,17 @@ function toSwap(tx: EnhancedTx, wallet: string): Swap | null {
 // how many recent swaps we look at (keeps it fast and cheap)
 const MAX_SWAPS = 100;
 
-export async function fetchSwaps(wallet: string, maxPages = 3): Promise<Swap[]> {
+export async function fetchSwaps(wallet: string, maxPages = 6): Promise<Swap[]> {
   const swaps: Swap[] = [];
   let before: string | undefined;
+  let beforeParam = "before";
 
   for (let page = 0; page < maxPages; page++) {
     const url = new URL(`https://api.helius.xyz/v0/addresses/${wallet}/transactions`);
     url.searchParams.set("api-key", key());
     url.searchParams.set("type", "SWAP");
     url.searchParams.set("limit", "100");
-    if (before) url.searchParams.set("before", before);
+    if (before) url.searchParams.set(beforeParam, before);
 
     let res = await fetch(url, { cache: "no-store" });
 
@@ -104,10 +105,11 @@ export async function fetchSwaps(wallet: string, maxPages = 3): Promise<Swap[]> 
     if (!res.ok) {
       const body = await res.text().catch(() => "");
       // Busy wallets: Helius stops when a window has no swaps and tells us
-      // where to continue ("...query the API again with the `before` parameter set to <sig>").
-      const next = body.match(/`before` parameter set to ([1-9A-HJ-NP-Za-km-z]{60,100})/);
+      // where to continue ("...with the `before-signature` parameter set to <sig>").
+      const next = body.match(/`([a-z-]+)` parameter set to ([1-9A-HJ-NP-Za-km-z]{60,100})/i);
       if (next) {
-        before = next[1];
+        beforeParam = next[1];
+        before = next[2];
         continue;
       }
       console.error(`helius ${res.status} for ${wallet}: ${body.slice(0, 300)}`);
