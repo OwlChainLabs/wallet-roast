@@ -24,10 +24,24 @@ type NativeTransfer = {
   amount: number; // lamports
 };
 
+type TokenBalanceChange = {
+  userAccount?: string;
+  mint: string;
+  rawTokenAmount?: { tokenAmount: string; decimals: number };
+};
+
+type AccountData = {
+  account: string;
+  nativeBalanceChange?: number; // lamports
+  tokenBalanceChanges?: TokenBalanceChange[];
+};
+
 type EnhancedTx = {
   signature: string;
   timestamp: number;
   type: string;
+  feePayer?: string;
+  accountData?: AccountData[];
   tokenTransfers?: TokenTransfer[];
   nativeTransfers?: NativeTransfer[];
 };
@@ -38,36 +52,38 @@ function key(): string {
   return k;
 }
 
-// Turn one parsed transaction into a single "wallet swapped SOL <-> token" record.
-// Wrapped SOL and native SOL are treated as the same thing.
+// Turn one transaction into a "wallet swapped SOL <-> token" record using the real
+// balance changes of the wallet (works no matter which terminal or parser was used).
+// SOL change includes fees, tips and account rent: that is what the trade really cost.
+// Wrapped SOL counts as SOL.
 function toSwap(tx: EnhancedTx, wallet: string): Swap | null {
+  // only transactions the wallet signed itself; skips other people's trades
+  // that merely mention this address (e.g. dev wallets of active coins)
+  if (tx.feePayer && tx.feePayer !== wallet) return null;
+
   let sol = 0;
   const tokens = new Map<string, number>();
 
-  for (const n of tx.nativeTransfers ?? []) {
-    if (n.toUserAccount === wallet) sol += n.amount / 1e9;
-    if (n.fromUserAccount === wallet) sol -= n.amount / 1e9;
-  }
-  for (const t of tx.tokenTransfers ?? []) {
-    const amt = t.tokenAmount ?? 0;
-    if (t.mint === SOL_MINT) {
-      if (t.toUserAccount === wallet) sol += amt;
-      if (t.fromUserAccount === wallet) sol -= amt;
-      continue;
+  for (const a of tx.accountData ?? []) {
+    if (a.account === wallet) sol += (a.nativeBalanceChange ?? 0) / 1e9;
+    for (const c of a.tokenBalanceChanges ?? []) {
+      if (c.userAccount !== wallet || !c.rawTokenAmount) continue;
+      const amt = Number(c.rawTokenAmount.tokenAmount) / 10 ** c.rawTokenAmount.decimals;
+      if (c.mint === SOL_MINT) sol += amt;
+      else tokens.set(c.mint, (tokens.get(c.mint) ?? 0) + amt);
     }
-    if (t.toUserAccount === wallet) tokens.set(t.mint, (tokens.get(t.mint) ?? 0) + amt);
-    if (t.fromUserAccount === wallet) tokens.set(t.mint, (tokens.get(t.mint) ?? 0) - amt);
   }
 
-  // keep the token with the biggest move, ignore dust
+  // keep the token with the biggest move
   let best: [string, number] | null = null;
   for (const [mint, d] of tokens) {
     if (d === 0) continue;
     if (!best || Math.abs(d) > Math.abs(best[1])) best = [mint, d];
   }
-  if (!best || Math.abs(sol) < 1e-6) return null;
-  // a real swap moves SOL and token in opposite directions
-  if (Math.sign(sol) === Math.sign(best[1])) return null;
+  if (!best) return null;
+  // buy: token in, SOL out. sell: token out, SOL in (or ~0 for dust sells after fees).
+  // token in AND SOL in makes no sense as a trade (airdrop + refund), skip it.
+  if (best[1] > 0 && sol >= 0) return null;
 
   return {
     signature: tx.signature,
@@ -81,15 +97,15 @@ function toSwap(tx: EnhancedTx, wallet: string): Swap | null {
 // Fetch the latest transactions unfiltered (fast even for busy wallets)
 // and pick out the swaps ourselves. Up to `maxPages` pages of 100 tx.
 // how many recent swaps we look at (keeps it fast and cheap)
-const MAX_SWAPS = 100;
+const MAX_SWAPS = 1000;
 
-export async function fetchSwaps(wallet: string, maxPages = 4): Promise<Swap[]> {
+export async function fetchSwaps(wallet: string, maxPages = 12): Promise<Swap[]> {
   const swaps: Swap[] = [];
   let before: string | undefined;
   let beforeParam = "before";
 
   // hard budget for the whole search, every request must finish inside it
-  const deadline = Date.now() + 20_000;
+  const deadline = Date.now() + 15_000;
   const remaining = () => deadline - Date.now();
 
   for (let page = 0; page < maxPages; page++) {

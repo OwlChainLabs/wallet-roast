@@ -104,18 +104,29 @@ async function askClaude(facts: string): Promise<{ title: string; roast: string 
 async function buildRoast(wallet: string): Promise<RoastResult> {
   let names: Record<string, string>;
   let stats: WalletStats;
-  if (hasSolanaTrackerKey()) {
-    // trades are indexed per trader (works for busy wallets and terminals).
-    // one page has up to 1000 trades; we compute pnl from them ourselves.
-    const recent = await fetchTradesST(wallet, 1000);
-    names = recent.names;
-    stats = computeStats(wallet, recent.swaps, names);
-  } else {
-    // fallback: parse raw transactions from helius
-    const swaps = await fetchSwaps(wallet);
-    names = await fetchTokenNames([...new Set(swaps.map((s) => s.mint))]);
-    stats = computeStats(wallet, swaps, names);
+  // primary: the wallet's own signed transactions with real balance changes (helius).
+  // ground truth for any terminal (padre, axiom, photon, ...).
+  let swaps = process.env.HELIUS_API_KEY ? await fetchSwaps(wallet).catch((err) => {
+    console.error("helius failed", wallet, err);
+    return [];
+  }) : [];
+  names = {};
+
+  if (swaps.length < 5 && hasSolanaTrackerKey()) {
+    // dev wallets of busy coins are flooded with other people's transactions,
+    // so helius finds few own trades in time. solana tracker indexes per trader.
+    console.error(`helius found ${swaps.length} swaps, using solana tracker`, wallet);
+    const st = await fetchTradesST(wallet, 1000);
+    if (st.swaps.length > swaps.length) {
+      swaps = st.swaps;
+      names = st.names;
+    }
   }
+
+  const missing = [...new Set(swaps.map((x) => x.mint))].filter((m) => !names[m]);
+  if (missing.length && process.env.HELIUS_API_KEY) Object.assign(names, await fetchTokenNames(missing));
+  stats = computeStats(wallet, swaps, names);
+
   const score = degenScore(stats);
 
   if (stats.trades === 0) {
@@ -149,7 +160,7 @@ async function buildOrSkip(wallet: string): Promise<RoastResult> {
 // and the same wallet does not cost API calls again and again.
 export async function getRoast(wallet: string): Promise<RoastResult> {
   try {
-    return await unstable_cache(() => buildOrSkip(wallet), ["roast-v7", wallet], { revalidate: 3600 })();
+    return await unstable_cache(() => buildOrSkip(wallet), ["roast-v8", wallet], { revalidate: 3600 })();
   } catch (err) {
     if (err instanceof EmptyResult) return err.result;
     throw err;

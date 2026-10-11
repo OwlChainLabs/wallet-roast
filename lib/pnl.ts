@@ -61,7 +61,8 @@ export function computeStats(
       by.set(s.mint, r);
     }
     r.tokenNet += s.tokenDelta;
-    if (s.solDelta < 0) {
+    if (s.tokenDelta > 0) {
+      // buy
       r.solIn += -s.solDelta;
       r.buys++;
       r.firstBuy = Math.min(r.firstBuy ?? s.timestamp, s.timestamp);
@@ -106,8 +107,8 @@ export function computeStats(
     biggestLoss: sorted.at(-1) && sorted.at(-1)!.pnl < 0 ? sorted.at(-1)! : null,
     fastestPaperHands: paper ?? null,
     bagsHeld: results.filter((r) => r.buys > 0 && r.sells === 0).length,
-    buyOnly: swaps.length >= 20 && swaps.every((s) => s.solDelta < 0),
-    avgBuy: avg(swaps.filter((s) => s.solDelta < 0).map((s) => -s.solDelta)),
+    buyOnly: swaps.length >= 20 && swaps.every((s) => s.tokenDelta > 0),
+    avgBuy: avg(swaps.filter((s) => s.tokenDelta > 0).map((s) => -s.solDelta)),
     avgHoldMinutes: holds.length ? holds.reduce((a, b) => a + b, 0) / holds.length : null,
     firstTrade: times.length ? Math.min(...times) : null,
     lastTrade: times.length ? Math.max(...times) : null,

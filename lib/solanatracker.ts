@@ -36,7 +36,7 @@ export async function fetchTradesST(
 
   const swaps: Swap[] = [];
   const names: Record<string, string> = {};
-  const deadline = Date.now() + 20_000;
+  const deadline = Date.now() + 15_000;
   let cursor: string | undefined;
 
   for (let page = 0; page < 2 && swaps.length < maxSwaps; page++) {
