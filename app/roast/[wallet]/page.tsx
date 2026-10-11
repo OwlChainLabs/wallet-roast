@@ -29,7 +29,8 @@ export default async function RoastPage({ params }: Props) {
   let result;
   try {
     result = await getRoast(wallet);
-  } catch {
+  } catch (err) {
+    console.error("roast failed", wallet, err);
     return (
       <main>
         <h1>🦉 wallet roast</h1>

@@ -79,7 +79,7 @@ function toSwap(tx: EnhancedTx, wallet: string): Swap | null {
 }
 
 // Fetch up to `maxPages` pages (100 tx each) of SWAP transactions.
-export async function fetchSwaps(wallet: string, maxPages = 5): Promise<Swap[]> {
+export async function fetchSwaps(wallet: string, maxPages = 10): Promise<Swap[]> {
   const swaps: Swap[] = [];
   let before: string | undefined;
 
@@ -90,8 +90,29 @@ export async function fetchSwaps(wallet: string, maxPages = 5): Promise<Swap[]> 
     url.searchParams.set("limit", "100");
     if (before) url.searchParams.set("before", before);
 
-    const res = await fetch(url, { cache: "no-store" });
-    if (!res.ok) throw new Error(`helius error ${res.status}`);
+    let res = await fetch(url, { cache: "no-store" });
+
+    // free tier rate limit: wait a moment and try once more
+    if (res.status === 429) {
+      await new Promise((r) => setTimeout(r, 1200));
+      res = await fetch(url, { cache: "no-store" });
+    }
+
+    if (!res.ok) {
+      const body = await res.text().catch(() => "");
+      // Busy wallets: Helius stops when a window has no swaps and tells us
+      // where to continue ("...query the API again with the `before` parameter set to <sig>").
+      const next = body.match(/`before` parameter set to ([1-9A-HJ-NP-Za-km-z]{60,100})/);
+      if (next) {
+        before = next[1];
+        continue;
+      }
+      console.error(`helius ${res.status} for ${wallet}: ${body.slice(0, 300)}`);
+      // keep what we already have instead of failing the whole roast
+      if (swaps.length > 0) break;
+      throw new Error(`helius error ${res.status}`);
+    }
+
     const txs = (await res.json()) as EnhancedTx[];
     if (!Array.isArray(txs) || txs.length === 0) break;
 
