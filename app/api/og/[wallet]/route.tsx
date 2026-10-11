@@ -18,7 +18,7 @@ export async function GET(_req: Request, { params }: Ctx) {
   let unit: Unit = "SOL";
   try {
     const r = await getRoast(wallet);
-    title = r.title;
+    title = r.title.replace(/\p{Extended_Pictographic}/gu, "").trim();
     score = r.score;
     pnl = r.stats.totalPnl;
     unit = r.stats.unit;
@@ -36,7 +36,7 @@ export async function GET(_req: Request, { params }: Ctx) {
         }}
       >
         <div style={{ display: "flex", fontSize: 30, color: "#9aa0b8" }}>
-          {`🦉 wallet roast · ${shortAddr(wallet)}`}
+          {`wallet roast · ${shortAddr(wallet)}`}
         </div>
         <div style={{ display: "flex", fontSize: 58, fontWeight: 800, lineHeight: 1.15 }}>{title}</div>
         <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between" }}>
@@ -54,6 +54,10 @@ export async function GET(_req: Request, { params }: Ctx) {
         </div>
       </div>
     ),
-    { width: 1200, height: 630 }
+    {
+      width: 1200,
+      height: 630,
+      headers: { "cache-control": "public, max-age=3600" },
+    }
   );
 }
