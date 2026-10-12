@@ -17,7 +17,7 @@ export async function GET(_req: Request, { params }: Ctx) {
   let pnl = 0;
   let unit: Unit = "SOL";
   try {
-    const r = await getRoast(wallet);
+    const r = await getRoast(wallet, false);
     title = r.title.replace(/\p{Extended_Pictographic}/gu, "").trim();
     score = r.score;
     pnl = r.stats.totalPnl;

@@ -215,3 +215,4 @@ main.landing { max-width: 1120px; padding: 64px 20px 48px; }
 .social a:hover { border-color: var(--green); transform: translateY(-1px); }
 .social svg { width: 17px; height: 17px; fill: currentColor; }
 @media (max-width: 640px) { .social a span { display: none; } }
+.ts { min-height: 65px; }

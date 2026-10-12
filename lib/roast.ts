@@ -221,9 +221,16 @@ async function buildOrSkip(wallet: string): Promise<RoastResult> {
 
 // Cache per wallet for 1 hour so the page and the share image reuse one result
 // and the same wallet does not cost API calls again and again.
-export async function getRoast(wallet: string): Promise<RoastResult> {
+export class NeedHuman extends Error { constructor() { super("need human"); } }
+
+// allowCompute=false only serves cached roasts (shared links, share image, bots without a pass)
+export async function getRoast(wallet: string, allowCompute = true): Promise<RoastResult> {
   try {
-    return await unstable_cache(() => buildOrSkip(wallet), ["roast-v15", wallet], { revalidate: 3600 })();
+    const build = () => {
+      if (!allowCompute) throw new NeedHuman(); // thrown, so nothing gets cached
+      return buildOrSkip(wallet);
+    };
+    return await unstable_cache(build,["roast-v15", wallet], { revalidate: 3600 })();
   } catch (err) {
     if (err instanceof EmptyResult) return err.result;
     throw err;

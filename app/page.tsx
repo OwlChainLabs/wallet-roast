@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { isValidWallet } from "@/lib/validate";
+import Turnstile, { passCheck, SITE_KEY } from "@/components/Turnstile";
 
 // made-up examples, not real wallets
 const EXAMPLES = [
@@ -16,16 +17,26 @@ export default function Home() {
   const [wallet, setWallet] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
     const w = wallet.trim();
     if (!isValidWallet(w)) {
       setError("that does not look like a solana address.");
       return;
     }
+    if (SITE_KEY && !token) {
+      setError("one sec, the human check is not done yet.");
+      return;
+    }
     setError("");
     setLoading(true);
+    if (!(await passCheck(token))) {
+      setLoading(false);
+      setError("human check failed. reload the page and try again.");
+      return;
+    }
     router.push(`/roast/${w}`);
   }
 
@@ -57,6 +68,7 @@ export default function Home() {
             {loading ? "roasting…" : "roast me"}
           </button>
         </form>
+        <Turnstile onToken={setToken} />
         {error && <p className="error">{error}</p>}
         <p className="note">read only. no connect, no signing, no private keys. ever.</p>
       </section>

@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { SITE_URL } from "@/lib/site";
-import { getRoast } from "@/lib/roast";
+import { cookies } from "next/headers";
+import { getRoast, NeedHuman } from "@/lib/roast";
+import { COOKIE, isValidPass } from "@/lib/human";
+import HumanGate from "@/components/HumanGate";
 import { isValidWallet, shortAddr, shortHash } from "@/lib/validate";
 import { money } from "@/lib/pnl";
 
@@ -15,7 +18,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   // a new roast gets a new image url, so x and browsers never show an old card
   let v = "0";
   try {
-    v = shortHash((await getRoast(wallet)).title);
+    v = shortHash((await getRoast(wallet, false)).title);
   } catch {}
   const image = `/api/og/${wallet}?v=${v}`;
   return {
@@ -31,8 +34,10 @@ export default async function RoastPage({ params }: Props) {
 
   let result;
   try {
-    result = await getRoast(wallet);
+    const pass = isValidPass((await cookies()).get(COOKIE)?.value);
+    result = await getRoast(wallet, pass);
   } catch (err) {
+    if (err instanceof NeedHuman) return <HumanGate />;
     console.error("roast failed", wallet, err);
     return (
       <main>
