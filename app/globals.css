@@ -14,7 +14,7 @@ html, body {
   margin: 0;
   background: radial-gradient(circle at 50% 0%, var(--bg2), var(--bg) 60%) fixed;
   color: var(--text);
-  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
   min-height: 100vh;
 }
 
@@ -45,7 +45,7 @@ input {
   background: #0f1426;
   color: var(--text);
   font-size: 1rem;
-  font-family: ui-monospace, monospace;
+  font-family: "JetBrains Mono", ui-monospace, monospace;
 }
 
 button, .btn {
@@ -115,7 +115,7 @@ main.rp { max-width: 1120px; padding: 16px 20px 18px; display: grid; grid-templa
 .rp-roast { background: #0f1426; border: 1px solid #222a4a; border-radius: 22px; padding: 30px 32px;
             box-shadow: 0 20px 60px rgba(0,0,0,.35); }
 .addr { display: inline-block; font-size: .85rem; color: var(--muted); border: 1px solid #222a4a;
-        padding: 4px 10px; border-radius: 999px; font-family: ui-monospace, monospace; }
+        padding: 4px 10px; border-radius: 999px; font-family: "JetBrains Mono", ui-monospace, monospace; }
 .rp-title { font-size: clamp(1.6rem, 2.8vw, 2.35rem); line-height: 1.15; letter-spacing: -0.02em; margin: 16px 0 14px; }
 .rp-text { font-size: 1.05rem; line-height: 1.65; color: #c9cce0; }
 
@@ -161,3 +161,31 @@ main.rp { max-width: 1120px; padding: 16px 20px 18px; display: grid; grid-templa
 .topnav { font-size: .9rem; font-weight: 600; color: var(--muted); text-decoration: none; padding: 8px 14px;
           border: 1px solid #222a4a; border-radius: 10px; background: rgba(15,20,38,.7); }
 .topnav:hover { color: var(--text); border-color: var(--green); }
+
+/* landing (new design) */
+main.landing { max-width: 1120px; padding: 64px 20px 48px; }
+.hero { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 22px; padding-bottom: 64px; }
+.pill { font-family: "JetBrains Mono", monospace; font-size: .78rem; letter-spacing: .08em; color: var(--green);
+        border: 1px solid rgba(153,69,255,.5); background: rgba(59,31,134,.25); padding: 7px 13px; border-radius: 999px; }
+.hero h1 { font-size: clamp(2.6rem, 7vw, 5.2rem); line-height: 1.02; letter-spacing: -0.035em; font-weight: 700; margin: 0; }
+.hero h1 span { color: var(--green); }
+.hero .sub { font-size: 1.15rem; line-height: 1.55; max-width: 580px; margin: 0; }
+.hero form { width: 100%; max-width: 620px; gap: 10px; }
+.hero input { padding: 18px 20px; border-radius: 14px; font-size: .95rem; }
+.hero button { padding: 18px 26px; border-radius: 14px; font-size: 1.05rem; box-shadow: 0 10px 30px rgba(20,241,149,.2); }
+.hero .note { color: var(--muted); font-size: .85rem; margin: 0; }
+.examples { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; padding-bottom: 72px; }
+.ex { background: #0f1426; border: 1px solid #222a4a; border-radius: 20px; padding: 24px; display: flex; flex-direction: column; gap: 14px; }
+.ex.hot { background: linear-gradient(160deg, rgba(59,31,134,.55), #0f1426); border-color: rgba(153,69,255,.5); }
+.ex .meta { display: flex; justify-content: space-between; font-family: "JetBrains Mono", monospace; font-size: .78rem; color: var(--muted); }
+.ex .meta b { color: var(--green); font-weight: 600; }
+.ex q { font-size: 1.15rem; line-height: 1.45; quotes: "\201C" "\201D"; }
+.ex .tags { display: flex; gap: 8px; flex-wrap: wrap; }
+.ex .tags span { font-size: .78rem; color: var(--muted); border: 1px solid #222a4a; padding: 5px 10px; border-radius: 999px; }
+.how h2 { font-size: 2rem; letter-spacing: -0.02em; margin: 0 0 24px; }
+.steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 28px; }
+.steps div { border-top: 1px solid #222a4a; padding-top: 20px; }
+.steps i { font-style: normal; font-family: "JetBrains Mono", monospace; color: var(--green); }
+.steps h3 { margin: 10px 0 8px; font-size: 1.2rem; }
+.steps p { margin: 0; color: var(--muted); line-height: 1.55; }
+.landing .foot { border-top: 1px solid #222a4a; padding-top: 20px; margin-top: 64px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
