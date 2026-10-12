@@ -173,7 +173,9 @@ main.landing { max-width: 1120px; padding: 64px 20px 48px; }
 .pill { font-family: "JetBrains Mono", monospace; font-size: .78rem; letter-spacing: .08em; color: var(--green);
         border: 1px solid rgba(153,69,255,.5); background: rgba(59,31,134,.25); padding: 7px 13px; border-radius: 999px; }
 .hero h1 { font-size: clamp(2.6rem, 7vw, 5.2rem); line-height: 1.02; letter-spacing: -0.035em; font-weight: 700; margin: 0; }
-.hero h1 span { color: var(--green); }
+.hero h1 span { background: linear-gradient(90deg, var(--green), #6be3ff, var(--purple), var(--green)); background-size: 300% 100%;
+  -webkit-background-clip: text; background-clip: text; color: transparent; animation: flow 8s linear infinite; }
+@keyframes flow { to { background-position: 300% 0; } }
 .hero .sub { font-size: 1.15rem; line-height: 1.55; max-width: 580px; margin: 0; }
 .hero form { width: 100%; max-width: 620px; gap: 10px; }
 .hero input { padding: 18px 20px; border-radius: 14px; font-size: .95rem; }
@@ -205,3 +207,11 @@ main.landing { max-width: 1120px; padding: 64px 20px 48px; }
 .star.big { width: 3px; height: 3px; }
 @keyframes twinkle { 0%, 100% { opacity: .15; } 50% { opacity: .9; } }
 .card, .rp-roast, .rp-score, .ex { backdrop-filter: blur(8px); }
+
+.social { display: flex; gap: 10px; }
+.social a { display: flex; align-items: center; gap: 8px; padding: 9px 14px; border-radius: 12px; border: 1px solid rgba(120,132,190,.18);
+  background: rgba(16,21,42,.72); color: var(--text); font-size: .9rem; font-weight: 600; text-decoration: none; backdrop-filter: blur(8px);
+  transition: border-color .15s, transform .15s; }
+.social a:hover { border-color: var(--green); transform: translateY(-1px); }
+.social svg { width: 17px; height: 17px; fill: currentColor; }
+@media (max-width: 640px) { .social a span { display: none; } }
