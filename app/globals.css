@@ -1,5 +1,5 @@
 :root {
-  --bg: #0a0d1a;
+  --bg: #070a16;
   --bg2: #141a33;
   --text: #f2f2f5;
   --muted: #9aa0b8;
@@ -12,7 +12,7 @@
 
 html, body {
   margin: 0;
-  background: radial-gradient(circle at 50% 0%, var(--bg2), var(--bg) 60%) fixed;
+  background: var(--bg);
   color: var(--text);
   font-family: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
   min-height: 100vh;
@@ -189,3 +189,14 @@ main.landing { max-width: 1120px; padding: 64px 20px 48px; }
 .steps h3 { margin: 10px 0 8px; font-size: 1.2rem; }
 .steps p { margin: 0; color: var(--muted); line-height: 1.55; }
 .landing .foot { border-top: 1px solid #222a4a; padding-top: 20px; margin-top: 64px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+
+/* shared owlchainlabs sky (same as owlchainlabs.xyz) */
+.sky { position: fixed; inset: 0; z-index: -1; overflow: hidden; background: var(--bg); pointer-events: none; }
+.glow { position: absolute; border-radius: 50%; filter: blur(90px); opacity: .55; }
+.glow.a { width: 620px; height: 620px; background: #3b1f86; top: -180px; right: -120px; animation: drift 18s ease-in-out infinite alternate; }
+.glow.b { width: 520px; height: 520px; background: #0c5c49; bottom: -220px; left: -160px; animation: drift 22s ease-in-out infinite alternate-reverse; }
+@keyframes drift { to { transform: translate(-80px, 60px) scale(1.12); } }
+.star { position: absolute; width: 2px; height: 2px; border-radius: 50%; background: #fff; animation: twinkle ease-in-out infinite; }
+.star.big { width: 3px; height: 3px; }
+@keyframes twinkle { 0%, 100% { opacity: .15; } 50% { opacity: .9; } }
+.card, .rp-roast, .rp-score, .ex { backdrop-filter: blur(8px); }
